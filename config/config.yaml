@@ -1,0 +1,194 @@
+# Satellite Urban Growth Analysis - Configuration File
+
+project:
+  name: "Satellite Urban Growth Analysis"
+  city: "Vijayawada"
+  version: "1.0.0"
+
+# --------------------------------------------------------
+# Region of Interest - Vijayawada, Andhra Pradesh, India
+# --------------------------------------------------------
+roi:
+  center_lat: 16.5062
+  center_lon: 80.6480
+  buffer_km: 30
+  bounding_box:
+    min_lon: 80.4
+    min_lat: 16.3
+    max_lon: 80.9
+    max_lat: 16.8
+
+# --------------------------------------------------------
+# Data Settings
+# --------------------------------------------------------
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  exports_dir: "data/exports"
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  patch_size: 256
+  overlap: 64
+  num_workers: 4
+  pin_memory: true
+
+# --------------------------------------------------------
+# Sentinel-2 Settings
+# --------------------------------------------------------
+sentinel2:
+  collection: "COPERNICUS/S2_SR_HARMONIZED"
+  cloud_threshold: 20
+  bands:
+    - "B2"   # Blue (490nm)
+    - "B3"   # Green (560nm)
+    - "B4"   # Red (665nm)
+    - "B5"   # Red Edge 1 (705nm)
+    - "B6"   # Red Edge 2 (740nm)
+    - "B7"   # Red Edge 3 (783nm)
+    - "B8"   # NIR (842nm)
+    - "B8A"  # Narrow NIR (865nm)
+    - "B11"  # SWIR 1 (1610nm)
+    - "B12"  # SWIR 2 (2190nm)
+  scale: 10   # Resolution in meters
+  years:
+    - 2020
+    - 2021
+    - 2022
+    - 2023
+
+# --------------------------------------------------------
+# Spectral Indices
+# --------------------------------------------------------
+indices:
+  ndvi:
+    formula: "(B8 - B4) / (B8 + B4)"
+    description: "Normalized Difference Vegetation Index"
+  ndbi:
+    formula: "(B11 - B8) / (B11 + B8)"
+    description: "Normalized Difference Built-up Index"
+  ndmi:
+    formula: "(B8 - B11) / (B8 + B11)"
+    description: "Normalized Difference Moisture Index"
+  mndwi:
+    formula: "(B3 - B11) / (B3 + B11)"
+    description: "Modified Normalized Difference Water Index"
+  evi:
+    formula: "2.5 * (B8 - B4) / (B8 + 6*B4 - 7.5*B2 + 1)"
+    description: "Enhanced Vegetation Index"
+  bsi:
+    formula: "((B11 + B4) - (B8 + B2)) / ((B11 + B4) + (B8 + B2))"
+    description: "Bare Soil Index"
+
+# --------------------------------------------------------
+# Classification Classes
+# --------------------------------------------------------
+classes:
+  num_classes: 3
+  names:
+    0: "Non-Urban"
+    1: "Semi-Urban"
+    2: "Urban"
+  colors:
+    0: "#2ECC71"  # Green for vegetation/non-urban
+    1: "#F39C12"  # Orange for semi-urban
+    2: "#E74C3C"  # Red for urban
+
+# --------------------------------------------------------
+# Model Settings
+# --------------------------------------------------------
+model:
+  architecture: "unet"   # unet, resnet50, efficientnet, temporal
+  in_channels: 10        # Number of input spectral bands
+  num_classes: 3
+  pretrained: true
+  dropout_rate: 0.3
+
+unet:
+  encoder_channels: [64, 128, 256, 512, 1024]
+  decoder_channels: [512, 256, 128, 64]
+  bilinear: true
+
+resnet50:
+  pretrained_weights: "imagenet"
+  freeze_backbone: false
+  fc_hidden_dim: 512
+
+efficientnet:
+  variant: "b0"
+  pretrained_weights: "imagenet"
+  dropout: 0.2
+
+temporal_model:
+  hidden_dim: 256
+  num_time_steps: 4
+  use_lstm: true
+
+# --------------------------------------------------------
+# Training Settings
+# --------------------------------------------------------
+training:
+  epochs: 100
+  batch_size: 16
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  optimizer: "adam"       # adam, sgd, adamw
+  scheduler: "cosine"     # cosine, step, plateau
+  mixed_precision: true
+  gradient_clip: 1.0
+  early_stopping_patience: 15
+  checkpoint_dir: "checkpoints"
+  log_dir: "logs"
+
+loss:
+  type: "combined"        # dice, cross_entropy, focal, combined
+  dice_weight: 0.5
+  ce_weight: 0.3
+  focal_weight: 0.2
+  focal_gamma: 2.0
+  focal_alpha: 0.25
+
+augmentation:
+  enabled: true
+  horizontal_flip: true
+  vertical_flip: true
+  rotation: 90
+  brightness_range: 0.2
+  contrast_range: 0.2
+  gaussian_noise: 0.01
+  elastic_transform: true
+
+# --------------------------------------------------------
+# Inference Settings
+# --------------------------------------------------------
+inference:
+  checkpoint_path: "checkpoints/best_model.pth"
+  batch_size: 8
+  tta: true               # Test-time augmentation
+  confidence_threshold: 0.5
+  output_dir: "results/predictions"
+
+# --------------------------------------------------------
+# Visualization Settings
+# --------------------------------------------------------
+visualization:
+  output_dir: "results/visualizations"
+  map_zoom: 11
+  dpi: 150
+  colormap: "RdYlGn"
+  save_format: "png"
+
+# --------------------------------------------------------
+# GIS Integration
+# --------------------------------------------------------
+gis:
+  crs: "EPSG:4326"
+  output_crs: "EPSG:32644"   # UTM Zone 44N for Vijayawada
+  osm_features:
+    - "roads"
+    - "buildings"
+    - "waterways"
+  export_formats:
+    - "GeoTIFF"
+    - "GeoJSON"
+    - "Shapefile"
