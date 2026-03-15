@@ -205,3 +205,44 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# -----------------------------------------------
+# Satellite Urban Growth Analysis project specifics
+# -----------------------------------------------
+
+# Large satellite data files
+data/raw/*.tif
+data/raw/*.tiff
+data/raw/*.TIF
+data/raw/*.geotiff
+data/exports/*.tif
+data/exports/*.zip
+
+# Processed numpy patches (can be large)
+data/processed/patches/
+data/processed/train/
+data/processed/val/
+data/processed/test/
+
+# Model checkpoints (large binary files)
+checkpoints/**/*.pth
+checkpoints/**/*.pt
+checkpoints/**/*.ckpt
+# Keep directory structure
+!checkpoints/**/.gitkeep
+
+# TensorBoard logs
+logs/*/events.out.*
+logs/**/
+
+# Results (generated outputs)
+results/predictions/*.tif
+results/visualizations/*.png
+results/reports/*.html
+
+# GEE credentials
+.config/earthengine/
+
+# Environment file (contains secrets)
+.env
+
